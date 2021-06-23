@@ -5,6 +5,7 @@ import sys
 import time
 #----------------------------------------------------------------------------------------------------------------------------
 window = tk.Tk()
+#test
 #window.geometry("400x300")
 window.title("Raspberry Pi NDI Streaming")
 
