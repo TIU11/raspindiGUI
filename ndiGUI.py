@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter.ttk import *
 import sys
 import time
+import RPi.GPIO as GPIO
 #----------------------------------------------------------------------------------------------------------------------------
 window = tk.Tk()
 #test
@@ -49,15 +50,17 @@ starting_frame.tk.call('tk', 'scaling', factor)
 starting_frame.place(height=int(r2_height), width = r2_width)
 background_color = "#0e628f"
 starting_frame.configure(background = background_color)
+
 #----------------------------------------------------------------------------------------------------------------------------
+
 euid = os.geteuid()
 
 if euid != 0:
     args = ['sudo', sys.executable] + sys.argv + [os.environ]
     os.execlpe('sudo', *args)
 
-
 #----------------------------------------------------------------------------------------------------------------------------
+
 all_lines = None
 with open("/etc/raspindi.conf", "r") as file:
     all_lines = file.readlines()
@@ -65,7 +68,9 @@ all_lines_copy = all_lines[:]
 for index, item in enumerate(all_lines):
     if index > 5:
         all_lines[index] = item[1:]
+
 #----------------------------------------------------------------------------------------------------------------------------
+
 def start_normal():
     with open("/etc/raspindi.conf", "w") as file:
         all_lines[6] = 'awb: "{}"; // Options: auto, sunlight, cloudy, shade, tungsten, fluorescent, incadescent, flash, horizon, max, off\n'.format(wb_clicked.get())
@@ -90,6 +95,32 @@ def stop_stream():
     start['state'] = tk.NORMAL
     stop['state'] = tk.DISABLED
     for i in all_lines_copy: file.write(i)
+
+program_state_button = False
+
+def button_callback():
+    if !(program_state_button):
+        start_normal()
+        program_state_button = True
+
+    else:
+        stop_stream()
+        program_state_button = False
+
+
+def on_closing():
+    stop_stream()
+    GPIO.cleanup()
+    window.destroy()
+
+#----------------------------------------------------------------------------------------------------------------------------
+
+button = 3
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+GPIO.add_event_detect(button,GPIO.RISING,callback=button_callback)
 
 start = tk.Button(starting_frame, text="Start streaming",command = start_normal , font= ("Calibri 14"), height = 2, width = 12)
 start.place(relx = .5, rely = .68, anchor = tk.CENTER)
@@ -173,5 +204,9 @@ brightness.set(50)
 brightness_text = tk.Label(starting_frame, text = "Brightness", bg = background_color)
 brightness_text.place(relx = .13, rely = .30, anchor = tk.CENTER)
 
+#----------------------------------------------------------------------------------------------------------------------------
 
+window.protocol("WM_DELETE_WINDOW", on_closing)
 window.mainloop()
+
+GPIO.cleanup()
