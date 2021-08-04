@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter.ttk import *
 import sys
 import time
-from gpiozero
+from gpiozero import Button
 #----------------------------------------------------------------------------------------------------------------------------
 window = tk.Tk()
 #test
