@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter.ttk import *
 import sys
 import time
-import RPi.GPIO as GPIO
+from gpiozero
 #----------------------------------------------------------------------------------------------------------------------------
 window = tk.Tk()
 #test
@@ -94,12 +94,16 @@ def stop_stream():
     os.popen('killall -9 raspindi')
     start['state'] = tk.NORMAL
     stop['state'] = tk.DISABLED
-    for i in all_lines_copy: file.write(i)
+    with open("/etc/raspindi.conf", "w") as file:
+        for i in all_lines_copy: file.write(i)
 
+global program_state_button
 program_state_button = False
 
 def button_callback():
-    if !(program_state_button):
+    global program_state_button
+
+    if (program_state_button != True):
         start_normal()
         program_state_button = True
 
@@ -109,18 +113,18 @@ def button_callback():
 
 
 def on_closing():
-    stop_stream()
-    GPIO.cleanup()
-    window.destroy()
+    try:
+        stop_stream()
+        GPIO.cleanup()
+        window.destroy()
+    except:
+        GPIO.cleanup()
+        window.destroy()
 
 #----------------------------------------------------------------------------------------------------------------------------
 
-button = 3
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-GPIO.add_event_detect(button,GPIO.RISING,callback=button_callback)
+button = Button(2)
+button.when_pressed = button_callback
 
 start = tk.Button(starting_frame, text="Start streaming",command = start_normal , font= ("Calibri 14"), height = 2, width = 12)
 start.place(relx = .5, rely = .68, anchor = tk.CENTER)
